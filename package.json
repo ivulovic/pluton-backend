@@ -1,5 +1,5 @@
 {
-  "name": "lib-example",
+  "name": "pluton-backend",
   "private": true,
   "scripts": {
     "prettier": "prettier --ignore-path .gitignore --write \"**/*.+(js|json|ts|tsx)\""
@@ -7,7 +7,7 @@
   "workspaces": {
     "packages": [
       "packages/*",
-      "sites/*"
+      "projects/*"
     ]
   },
   "devDependencies": {
