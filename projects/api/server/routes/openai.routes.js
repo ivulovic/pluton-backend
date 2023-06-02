@@ -14,4 +14,7 @@ r.use(openAIMiddleware);
 r.route("/")
   .post([validateBody(openaiSchema.prompt)], OpenAIController.prompt);
 
+r.route("/stream")
+.post([validateBody(openaiSchema.prompt)], OpenAIController.streamPrompt);
+
 export default r;

@@ -1,5 +1,6 @@
 import { Configuration, OpenAIApi } from "openai";
-import Config from "../config" ;
+import Config from "../config";
+import stream from "../stream";
 
 const { OPENAI_ORGANIZATION, OPENAI_API_KEY } = Config;
 
@@ -10,30 +11,78 @@ const OpenAIController = {
       apiKey: OPENAI_API_KEY,
     });
     const OpenAI = new OpenAIApi(configuration);
-   try{
-    // const response = await OpenAI.createCompletion({
-    //   // model: "gpt-3.5-turbo",
-    //   model: "text-davinci-003",
-    //   prompt: "Hello world",
-    // });
-    // const response = await OpenAI.createChatCompletion({
-    //   model: "gpt-3.5-turbo",
-    //   messages: [
-    //     // {"role": "system", "content": "You are a helpful assistant."},
-    //     // {"role": "user", "content": "Who won the world series in 2020?"},
-    //     {"role": "user", "content": 'Translate the following Serbian text to French: "Ja sam jedan sjajan decko!"'}
-
-    //   ],
-    // });
-    const response = await OpenAI.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: req.value.body.messages
+    try {
+      const response = await OpenAI.createChatCompletion({
+        model: "gpt-3.5-turbo",
+        messages: req.value.body.messages,
+      });
+      res.status(200).send(response.data.choices[0]);
+    } catch (e) {
+      console.log("error", e);
+      res.status(200).send({});
+    }
+  },
+  streamPrompt: async (req, res) => {
+    const configuration = new Configuration({
+      organization: OPENAI_ORGANIZATION,
+      apiKey: OPENAI_API_KEY,
     });
-    res.status(200).send(response.data.choices[0]);
-   } catch(e){
-    console.log('error', e);
-    res.status(200).send({});
-   }
+    const OpenAI = new OpenAIApi(configuration);
+    res.flush = () => undefined;
+    try {
+      const response = await OpenAI.createChatCompletion(
+        {
+          model: "gpt-3.5-turbo",
+          messages: req.value.body.messages,
+          stream: true,
+        },
+        { responseType: "stream" },
+      );
+
+      response.data.on("data", (data) => {
+        const lines = data
+          .toString()
+          .split("\n")
+          .filter((line) => line.trim() !== "");
+        for (const line of lines) {
+          const message = line.replace(/^data: /, "");
+          if (message === "[DONE]") {
+            return; // Stream finished
+          }
+          try {
+            const parsed = JSON.parse(message);
+            const id = parsed.id;
+            const role = "assistant";
+            const content = parsed.choices[0].delta.content;
+            
+            if (content) {
+              stream.send({ id, role, content }, "ai");
+            }
+            if(parsed.choices[0].finish_reason === 'stop'){
+              res.end();
+            }
+          } catch (error) {
+            console.log("error", error);
+            // console.error("Could not JSON parse stream message", message, error);
+          }
+        }
+      });
+    } catch (error) {
+      if (error.response && error.response.status) {
+        console.error(error.response.status, error.message);
+        error.response.data.on("data", (data) => {
+          const message = data.toString();
+          try {
+            const parsed = JSON.parse(message);
+            console.error("An error occurred during OpenAI request: ", parsed);
+          } catch (error) {
+            console.error("An error occurred during OpenAI request: ", message);
+          }
+        });
+      } else {
+        console.error("An error occurred during OpenAI request", error);
+      }
+    }
   },
 };
 
