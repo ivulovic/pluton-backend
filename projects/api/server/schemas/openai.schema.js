@@ -6,6 +6,7 @@ const OpenAISchema = {
   }),
   prompt: Joi.object({
     messages: Joi.array().required(),
+    deviceId: Joi.string().required(),
   }),
 };
 

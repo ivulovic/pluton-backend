@@ -56,7 +56,7 @@ const OpenAIController = {
             const content = parsed.choices[0].delta.content;
             
             if (content) {
-              stream.send({ id, role, content }, "ai");
+              stream.send({ id, role, content }, req.value.body.deviceId);
             }
             if(parsed.choices[0].finish_reason === 'stop'){
               res.end();
