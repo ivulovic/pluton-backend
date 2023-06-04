@@ -2,6 +2,7 @@
   "name": "pluton-backend",
   "private": true,
   "scripts": {
+    "build:open-source-scripts": "yarn workspace @pluton/open-source-scripts build",
     "prettier": "prettier --ignore-path .gitignore --write \"**/*.+(js|json|ts|tsx)\""
   },
   "workspaces": {

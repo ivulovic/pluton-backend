@@ -1,6 +1,6 @@
-import Secret from "../secret";
+import Config from "../config";
 
-const { OPENAI_API_KEY, OPENAI_ORGANIZATION } = Secret;
+const { OPENAI_API_KEY, OPENAI_ORGANIZATION } = Config;
 
 function openAIMiddleware(req, res, next) {
   req.headers["Authorization"] = `Bearer ${OPENAI_API_KEY}`;
